@@ -1,6 +1,6 @@
 import logging
 import tkinter as tk
-from connectors.coinbase_futures import CoinBaseFuturesClient
+from connectors.binance_futures import BinanceFuturesClient
 import keys
 
 logger = logging.getLogger()
