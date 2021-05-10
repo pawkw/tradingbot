@@ -1,0 +1,2 @@
+# tradingbot
+Example trading bot
