@@ -25,13 +25,10 @@ logger.addHandler(file_handler)
 ######################
 
 if __name__ == "__main__":
+    APIKEY = keys.SANDBOX_APIKEY if keys.SANDBOX_ON else keys.ACTUAL_APIKEY
+    APISECRET = keys.SANDBOX_APISECRET if keys.SANDBOX_ON else keys.ACTUAL_APISECRET
 
     root = tk.Tk()
-    client = BinanceFuturesClient(keys.APIKEY, keys.APISECRET, keys.PASSPHRASE, True)
-    data = client.get_balances()
-    data = client.get_historical_data('BTC-USD', '1h')
-    for candle in data:
-        print("Time: %d Open: %f.2 Low: %f.2 High: %f.2 Close: %f.2 Vol: %f.2" % (candle['time'], candle['open'], candle['low'],
-                                                                                  candle['high'], candle['close'], candle['volume']))
+    client = BinanceFuturesClient(APIKEY, APISECRET, keys.SANDBOX_ON)
 
     root.mainloop()
