@@ -1,7 +1,7 @@
 import logging
 import tkinter as tk
 from connectors.binance_futures import BinanceFuturesClient
-import keys
+import keys  # This is keys.py, that defines APIKEY, APISECRET, etc.
 
 logger = logging.getLogger()
 
