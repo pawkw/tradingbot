@@ -28,7 +28,10 @@ if __name__ == "__main__":
     APIKEY = keys.SANDBOX_APIKEY if keys.SANDBOX_ON else keys.ACTUAL_APIKEY
     APISECRET = keys.SANDBOX_APISECRET if keys.SANDBOX_ON else keys.ACTUAL_APISECRET
 
-    root = tk.Tk()
+    logger.debug('Program start')
     client = BinanceFuturesClient(APIKEY, APISECRET, keys.SANDBOX_ON)
-
+    logger.debug('Client started')
+    root = tk.Tk()
+    logger.debug('TK root set')
     root.mainloop()
+    logger.debug('End program')
