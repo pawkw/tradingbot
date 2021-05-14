@@ -35,3 +35,4 @@ if __name__ == "__main__":
     logger.debug('TK root set')
     root.mainloop()
     logger.debug('End program')
+    exit(0)
