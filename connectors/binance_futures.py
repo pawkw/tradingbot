@@ -11,7 +11,7 @@ import json
 import threading
 import typing
 
-import keys
+import binance_keys
 from models import *
 
 logger = logging.getLogger()
@@ -20,11 +20,11 @@ logger = logging.getLogger()
 class BinanceFuturesClient:
     def __init__(self, public_key: str, secret_key: str, testing: bool):
         if testing:
-            self._base_url = keys.sandbox
-            self._base_wss = keys.sandboxWebsocket
+            self._base_url = binance_keys.sandbox
+            self._base_wss = binance_keys.sandboxWebsocket
         else:
-            self._base_url = keys.actual
-            self._base_wss = keys.actualWebsocket
+            self._base_url = binance_keys.actual
+            self._base_wss = binance_keys.actualWebsocket
 
         self._public_key = public_key
         self._secret_key = secret_key
@@ -76,7 +76,7 @@ class BinanceFuturesClient:
         contracts = dict()
         if exchange_info is not None:
             for contract in exchange_info['symbols']:
-                contracts[contract['pair']] = Contract(contract)
+                contracts[contract['pair']] = Contract(contract, 'Binance')
 
         return contracts
 
@@ -91,7 +91,7 @@ class BinanceFuturesClient:
 
         if response is not None:
             for candle in response:
-                candles.append(Candle(candle))
+                candles.append(Candle(candle, interval, 'Binance'))
         return candles
 
     def get_bid_ask(self, contract: Contract) -> typing.Dict[str, float]:
@@ -120,17 +120,17 @@ class BinanceFuturesClient:
 
         if account_data:
             for asset in account_data['assets']:
-                balances[asset['asset']] = Balance(asset)
+                balances[asset['asset']] = Balance(asset, 'Binance')
         return balances
 
     def place_order(self, contract: Contract, side: str, quantity: float, order_type: str, price=None, tif=None) -> OrderStatus:
         data = dict()
         data['symbol'] = contract.symbol
         data['side'] = side
-        data['quantity'] = quantity
+        data['quantity'] = round(round(quantity / contract.lot_size) * contract.lot_size, 8)
         data['type'] = order_type
         if price is not None:
-            data['price'] = price
+            data['price'] = round(round(price / contract.tick_size) * contract.tick_size, 8)
         if tif is not None:
             data['timeInForce'] = tif
         data['timestamp'] = int(time.time() * 1000)
