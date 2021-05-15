@@ -2,7 +2,7 @@ import logging
 import tkinter as tk
 from connectors.binance_futures import BinanceFuturesClient
 import binance_keys  # This is binance_keys.py, that defines APIKEY, APISECRET, etc.
-
+from interface.root_component import Root
 logger = logging.getLogger()
 
 ######################
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     logger.debug('Program start')
     client = BinanceFuturesClient(APIKEY, APISECRET, binance_keys.SANDBOX_ON)
     logger.debug('Client started')
-    root = tk.Tk()
+    root = Root()
     logger.debug('TK root set')
     root.mainloop()
     logger.debug('End program')
