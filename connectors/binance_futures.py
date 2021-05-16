@@ -32,6 +32,8 @@ class BinanceFuturesClient:
         self._headers = {'X-MBX-APIKEY': self._public_key}
 
         self.prices = dict()
+        self.logs = []
+
         self.contracts = self.get_contracts()
         self.balances = self.get_balances()
 
@@ -41,9 +43,14 @@ class BinanceFuturesClient:
         logger.info('Initialized '+'sandbox at Binance.' if testing else 'actual trading client at Binance.')
 
         t = threading.Thread(target=self._start_websocket)
+        t.daemon = True
         logger.debug('Thread set.')
         t.start()
         logger.debug('Thread running.')
+
+    def _add_log(self, msg: str):
+        # logger.debug('%s', msg)
+        self.logs.append({'log': msg, 'displayed': False})
 
     def _generate_signature(self, params: typing.Dict) -> str:
         return hmac.new(self._secret_key.encode(), urlencode(params).encode(), hashlib.sha256).hexdigest()
@@ -191,7 +198,7 @@ class BinanceFuturesClient:
             time.sleep(2.0)
 
     def _on_open(self, ws):
-        logger.info("Opened websocket: %s", self._base_wss)
+        # logger.info("Opened websocket: %s", self._base_wss)
         self.subscribe_to_channel(list(self.contracts.values()), 'bookTicker')
         return
 
@@ -204,8 +211,6 @@ class BinanceFuturesClient:
         return
 
     def _on_message(self, ws, msg: str):
-        print(ws, msg)
-
         data = json.loads(msg)
 
         if "e" in data:
@@ -217,7 +222,6 @@ class BinanceFuturesClient:
                 else:
                     self.prices[symbol]['bid'] = float(data['b'])
                     self.prices[symbol]['ask'] = float(data['a'])
-            print()
         return
 
     def subscribe_to_channel(self, contracts: typing.List[Contract], channel: str):
