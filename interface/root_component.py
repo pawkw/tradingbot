@@ -4,6 +4,7 @@ from connectors.binance_futures import BinanceFuturesClient
 
 from interface.styling import *
 from interface.logging_component import Logging
+from interface.watchlist_component import Watchlist
 logger = logging.getLogger()
 
 class Root(tk.Tk):
@@ -17,6 +18,10 @@ class Root(tk.Tk):
         self._left_frame.pack(side=tk.LEFT)
         self._right_frame = tk.Frame(self, bg=BG_COLOUR)
         self._right_frame.pack(side=tk.LEFT)  # Yes, on the left.
+
+        # The dict() here is a place holder. For adding another exchange.
+        self._watchlist_frame = Watchlist(self.client.get_contracts(), dict(), self._left_frame, bg=BG_COLOUR)
+        self._watchlist_frame.pack(side=tk.TOP)
 
         self._logging_frame = Logging(self._left_frame, bg=BG_COLOUR)
         self._logging_frame.pack(side=tk.TOP)
