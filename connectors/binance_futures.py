@@ -83,7 +83,7 @@ class BinanceFuturesClient:
         contracts = dict()
         if exchange_info is not None:
             for contract in exchange_info['symbols']:
-                contracts[contract['pair']] = Contract(contract, 'Binance')
+                contracts[contract['symbol']] = Contract(contract, 'Binance')
 
         return contracts
 
