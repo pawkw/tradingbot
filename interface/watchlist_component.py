@@ -30,11 +30,20 @@ class Watchlist(tk.Frame):
         self._coinbase_entry.grid(row=1, column=1)
         self._coinbase_entry.bind('<Return>', self._add_coinbase_symbol)
 
+        self.body_widgets = dict()
+
         self._headers = ['Symbol', 'Exchange', 'Bid', 'Ask']
 
         for position, header in enumerate(self._headers):
             h = tk.Label(self._table_frame, text=header.capitalize(), bg=BG_COLOUR, fg=FG_COLOUR1, font=BOLD_FONT)
             h.grid(row=0, column=position)
+
+        for header in self._headers:
+            self.body_widgets[header] = dict()
+            if header in ['bid', 'ask']:
+                self.body_widgets[h+'_var'] = dict()
+
+        self._body_index = 1
 
     def _add_binance_symbol(self, event):
         symbol = event.widget.get()
@@ -49,5 +58,25 @@ class Watchlist(tk.Frame):
             event.widget.delete(0, tk.END)
 
     def _add_symbol(self, symbol: str, exchange: str):
+        b_index = self._body_index
 
+        self.body_widgets['symbol'][b_index] = tk.Label(self._table_frame, text=symbol, bg=BG_COLOUR, fg=FG_COLOUR2,
+                                                        font=GLOBAL_FONT)
+        self.body_widgets['symbol'][b_index].grid(row=b_index, column=0)
+
+        self.body_widgets['exchange'][b_index] = tk.Label(self._table_frame, text=exchange, bg=BG_COLOUR, fg=FG_COLOUR2,
+                                                          font=GLOBAL_FONT)
+        self.body_widgets['exchange'][b_index].grid(row=b_index, column=1)
+
+        self.body_widgets['bid_var'][b_index] = tk.StringVar()
+        self.body_widgets['bid'][b_index] = tk.Label(self._table_frame, textvariable=self.body_widgets['bid_var'][b_index],
+                                                     bg=BG_COLOUR, fg=FG_COLOUR2, font=GLOBAL_FONT)
+        self.body_widgets['bid'][b_index].grid(row=b_index, column=2)
+
+        self.body_widgets['ask_var'][b_index] = tk.StringVar()
+        self.body_widgets['ask'][b_index] = tk.Label(self._table_frame, textvariable=self.body_widgets['ask_var'][b_index],
+                                                     bg=BG_COLOUR, fg=FG_COLOUR2, font=GLOBAL_FONT)
+        self.body_widgets['ask'][b_index].grid(row=b_index, column=3)
+
+        self._body_index += 1
         return
