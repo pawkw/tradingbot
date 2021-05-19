@@ -13,7 +13,7 @@ class StrategyEditor(tk.Frame):
 
         self._all_contracts = ['BTCUSDT', 'ETHUSDT']
 
-        self._all_timeframes = {'1m', '5m', '15m', '1h', '4h', '1d', '5d'}
+        self._all_timeframes = ['1m', '5m', '15m', '1h', '4h', '1d', '5d']
 
         self._commands_frame = tk.Frame(self, bg=BG_COLOUR)
         self._commands_frame.pack(side=tk.TOP)
@@ -31,7 +31,7 @@ class StrategyEditor(tk.Frame):
 
         self._base_params = [
             {'code_name': 'strategy_type', 'widget': tk.OptionMenu, 'data_type': str,
-             'values': {'Technical', 'Breakout'}, 'width': 10},
+             'values': ['Technical', 'Breakout'], 'width': 10},
             {'code_name': 'contract', 'widget': tk.OptionMenu, 'data_type': str,
              'values': self._all_contracts, 'width': 15},
             {'code_name': 'time_frame', 'widget': tk.OptionMenu, 'data_type': str,
@@ -63,15 +63,18 @@ class StrategyEditor(tk.Frame):
 
         for col, base_param in enumerate(self._base_params):
             code_name = base_param['code_name']
-            print(code_name)
             if base_param['widget'] == tk.OptionMenu:
-                self.body_widgets[code_name+'_var'][b_index] = tk.StringVar()
-                # self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0])
-                self.body_widgets[code_name][b_index] = tk.OptionMenu(self._table_frame,
-                                                                      self.body_widgets[code_name + '_var'][b_index],
-                                                                      *base_param['values']
-                                                                      )
-                self.body_widgets[code_name][b_index].config(width=base_param['width'])
+                try:
+                    self.body_widgets[code_name+'_var'][b_index] = tk.StringVar()
+                    self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0])
+                    self.body_widgets[code_name][b_index] = tk.OptionMenu(self._table_frame,
+                                                                          self.body_widgets[code_name + '_var'][b_index],
+                                                                          *base_param['values']
+                                                                          )
+                    self.body_widgets[code_name][b_index].config(width=base_param['width'])
+                except Exception as e:
+                    logger.error('Error while adding strategy row: %s', e)
+                    continue
             elif base_param['widget'] == tk.Entry:
                 self.body_widgets[code_name][b_index] = tk.Entry(self._table_frame, justify=tk.CENTER)
             elif base_param['widget'] == tk.Button:
@@ -82,7 +85,6 @@ class StrategyEditor(tk.Frame):
             else:
                 continue
             self.body_widgets[code_name][b_index].grid(row=b_index, column=col)
-            print(self.body_widgets[code_name][b_index])
         self._body_index += 1
 
     def _show_popup(self, row: int):
@@ -100,6 +102,8 @@ class StrategyEditor(tk.Frame):
         # Move window to coords above.
         self._pop_up_window.geometry(f"+{x - 80}+{y + 30}")
 
+        strategy_selected = self.body_widgets['strategy_type_var'][row].get()
+
     def _switch_strategy(self, row: int):
         print('Switch')
         pass
@@ -108,7 +112,5 @@ class StrategyEditor(tk.Frame):
         # Run through the columns, forgetting cells and removing entries... and I'm all out of entries.
         logger.debug('Delete row: %s', b_index)
         for element in self._base_params:
-            print(self.body_widgets[element['code_name']])
             self.body_widgets[element['code_name']][b_index].grid_forget()
-            print(element)
             del self.body_widgets[element['code_name']][b_index]
