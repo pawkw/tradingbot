@@ -41,9 +41,9 @@ class StrategyEditor(tk.Frame):
             {'code_name': 'stop_loss', 'widget': tk.Entry, 'data_type': str, 'width': 7},
             {'code_name': 'parameters', 'widget': tk.Button, 'data_type': str, 'text': 'parameters',
              'bg': BG_COLOUR2, 'command': self._show_popup},
-            {'code_name': 'parameters', 'widget': tk.Button, 'data_type': str, 'text': 'off',
+            {'code_name': 'activation', 'widget': tk.Button, 'data_type': str, 'text': 'off',
              'bg': 'darkred', 'command': self._switch_strategy},
-            {'code_name': 'parameters', 'widget': tk.Button, 'data_type': str, 'width': 7, 'text': 'X',
+            {'code_name': 'delete', 'widget': tk.Button, 'data_type': str, 'width': 7, 'text': 'X',
              'bg': 'darkred', 'command': self._delete_row},
         ]
         for position, header in enumerate(self._headers):
@@ -63,9 +63,10 @@ class StrategyEditor(tk.Frame):
 
         for col, base_param in enumerate(self._base_params):
             code_name = base_param['code_name']
+            print(code_name)
             if base_param['widget'] == tk.OptionMenu:
                 self.body_widgets[code_name+'_var'][b_index] = tk.StringVar()
-                self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0])
+                # self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0])
                 self.body_widgets[code_name][b_index] = tk.OptionMenu(self._table_frame,
                                                                       self.body_widgets[code_name + '_var'][b_index],
                                                                       *base_param['values']
@@ -85,8 +86,19 @@ class StrategyEditor(tk.Frame):
         self._body_index += 1
 
     def _show_popup(self, row: int):
-        print('Popup')
-        pass
+        # Find x and y coords of button that was clicked.
+        x = self.body_widgets['parameters'][row].winfo_rootx()
+        y = self.body_widgets['parameters'][row].winfo_rooty()
+
+        # Make window
+        self._pop_up_window = tk.Toplevel(self)
+        self._pop_up_window.wm_title('Parameters')
+        self._pop_up_window.config(bg=BG_COLOUR)
+        self._pop_up_window.attributes("-topmost", "true")  # Stay on top.
+        self._pop_up_window.grab_set()  # Turn off main window buttons.
+
+        # Move window to coords above.
+        self._pop_up_window.geometry(f"+{x - 80}+{y + 30}")
 
     def _switch_strategy(self, row: int):
         print('Switch')
