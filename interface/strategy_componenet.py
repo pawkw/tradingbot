@@ -15,6 +15,9 @@ class StrategyEditor(tk.Frame):
 
         self._all_timeframes = ['1m', '5m', '15m', '1h', '4h', '1d', '5d']
 
+        self._additional_parameters = dict()
+        self._extra_input = dict()
+
         self._commands_frame = tk.Frame(self, bg=BG_COLOUR)
         self._commands_frame.pack(side=tk.TOP)
 
@@ -42,10 +45,21 @@ class StrategyEditor(tk.Frame):
             {'code_name': 'parameters', 'widget': tk.Button, 'data_type': str, 'text': 'parameters',
              'bg': BG_COLOUR2, 'command': self._show_popup},
             {'code_name': 'activation', 'widget': tk.Button, 'data_type': str, 'text': 'off',
-             'bg': 'darkred', 'command': self._switch_strategy},
+             'bg': 'darkred', 'command': self._toggle_strategy},
             {'code_name': 'delete', 'widget': tk.Button, 'data_type': str, 'width': 7, 'text': 'X',
              'bg': 'darkred', 'command': self._delete_row},
         ]
+
+        self._extra_params = {
+            "Technical": [
+                {'code_name': 'ema_fast', 'name': 'MACD fast period', 'widget': tk.Entry, 'data_type': int},
+                {'code_name': 'ema_slow', 'name': 'MACD slow period', 'widget': tk.Entry, 'data_type': int},
+                {'code_name': 'ema_signal', 'name': 'MACD signal period', 'widget': tk.Entry, 'data_type': int},
+            ],
+            "Breakout": [
+                {'code_name': 'min_volume', 'name': 'Minimum volume', 'widget': tk.Entry, 'data_type': float},
+            ],
+        }
         for position, header in enumerate(self._headers):
             h = tk.Label(self._table_frame, text=header, bg=BG_COLOUR, fg=FG_COLOUR1, font=BOLD_FONT)
             h.grid(row=0, column=position)
@@ -59,8 +73,10 @@ class StrategyEditor(tk.Frame):
         self._body_index = 1
 
     def _add_strategy_row(self):
+        logger.debug('Add strategy.')
         b_index = self._body_index
 
+        # Add common parameters to each row.
         for col, base_param in enumerate(self._base_params):
             code_name = base_param['code_name']
             if base_param['widget'] == tk.OptionMenu:
@@ -85,9 +101,16 @@ class StrategyEditor(tk.Frame):
             else:
                 continue
             self.body_widgets[code_name][b_index].grid(row=b_index, column=col)
+
+        self._additional_parameters[b_index] = dict()
+        for strat, params in self._extra_params.items():
+            for param in params:
+                self._additional_parameters[b_index][param['code_name']] = None
+
         self._body_index += 1
 
     def _show_popup(self, row: int):
+        logger.debug('show_popup: row %d', row)
         # Find x and y coords of button that was clicked.
         x = self.body_widgets['parameters'][row].winfo_rootx()
         y = self.body_widgets['parameters'][row].winfo_rooty()
@@ -104,13 +127,52 @@ class StrategyEditor(tk.Frame):
 
         strategy_selected = self.body_widgets['strategy_type_var'][row].get()
 
-    def _switch_strategy(self, row: int):
-        print('Switch')
+        # Populate entry boxes
+        row_number = 0
+        for param in self._extra_params[strategy_selected]:
+            code_name = param['code_name']
+
+            temp_label = tk.Label(self._pop_up_window, bg=BG_COLOUR, fg=FG_COLOUR1, text=param['name'], font=BOLD_FONT)
+            temp_label.grid(row=row_number, column=0)
+
+            if param['widget'] == tk.Entry:
+                self._extra_input[code_name] = tk.Entry(self._pop_up_window, bg=BG_COLOUR2, justify=tk.CENTER,
+                                                        fg=FG_COLOUR1, insertbackground=FG_COLOUR1)
+                if self._additional_parameters[row][code_name] is not None:
+                    # Put current value in, if it exists.
+                    self._extra_input[code_name].insert(0, str(self._additional_parameters[row][code_name]))
+            else:
+                continue
+
+            self._extra_input[code_name].grid(row=row_number, column=1)
+            row_number += 1
+
+        # Validation button
+        validation_button = tk.Button(self._pop_up_window, text='Confirm change', bg=BG_COLOUR2, fg=FG_COLOUR1,
+                                      command=lambda: self.validate_parameters(row))
+        validation_button.grid(row=row_number, column=0, columnspan=2)
+
+    def validate_parameters(self, row: int):
+        logger.debug('Parameters change row: %s', row)
+
+        strategy_selected = self.body_widgets['strategy_type_var'][row].get()
+        for param in self._extra_params[strategy_selected]:
+            code_name = param['code_name']
+            if self._extra_input[code_name] == "":
+                self._additional_parameters[row][code_name] = None
+            else:
+                self._additional_parameters[row][code_name] = param['data_type'](self._extra_input[code_name].get())
+
+        self._pop_up_window.destroy()
+        return
+
+    def _toggle_strategy(self, row: int):
+        logger.debug('Toggle strategy: %d', row)
         pass
 
     def _delete_row(self, b_index: int):
-        # Run through the columns, forgetting cells and removing entries... and I'm all out of entries.
         logger.debug('Delete row: %s', b_index)
+        # Run through the columns, forgetting cells and removing entries... and I'm all out of entries.
         for element in self._base_params:
             self.body_widgets[element['code_name']][b_index].grid_forget()
             del self.body_widgets[element['code_name']][b_index]
