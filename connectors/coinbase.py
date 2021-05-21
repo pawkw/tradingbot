@@ -1,22 +1,19 @@
 # # Much to do.
-
-import logging
+import coinbase_keys
 import time
 
 import hmac
 import hashlib
-import base64
-from requests.auth import AuthBase
 from urllib.parse import urlencode
+import base64
 
 import requests
 import websocket
 import json
 import threading
 import typing
-
-import coinbase_keys
-from models import *
+import logging
+from requests.auth import AuthBase
 
 logger = logging.getLogger()
 
@@ -61,8 +58,8 @@ class CoinBaseFuturesClient:
         self._ws_thread = None
         self._ws_id = 1
 
-        self.contracts = self.get_contracts()
-        self.balances = self.get_balances()
+        # self.contracts = self.get_contracts()
+        # self.balances = self.get_balances()
         self.prices = dict()
 
         # t = threading.Thread(target=self._start_websocket)

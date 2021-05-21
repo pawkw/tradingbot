@@ -6,14 +6,23 @@ import logging
 
 logger = logging.getLogger()
 
+from connectors.binance_futures import BinanceFuturesClient
+from connectors.coinbase import CoinBaseFuturesClient
 
 class StrategyEditor(tk.Frame):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, root, binance: BinanceFuturesClient, coinbase: CoinBaseFuturesClient, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._all_contracts = ['BTCUSDT', 'ETHUSDT']
+        self.root = root
+        # self._exchanges = {'Binance': binance, 'Coinbase': coinbase}
+        self._exchanges = {'Binance': binance}
+        self._all_contracts = []
 
         self._all_timeframes = ['1m', '5m', '15m', '1h', '4h', '1d', '5d']
+
+        for exchange, client in self._exchanges.items():
+            for symbol, contract in client.contracts.items():
+                self._all_contracts.append(symbol + '_' + exchange.capitalize())
 
         self._additional_parameters = dict()
         self._extra_input = dict()
@@ -168,11 +177,49 @@ class StrategyEditor(tk.Frame):
 
     def _toggle_strategy(self, row: int):
         logger.debug('Toggle strategy: %d', row)
-        pass
+
+        for param in ['balance_pct', 'take_profit', 'stop_loss']:
+            # Did the user fill in the boxes?
+            if self.body_widgets[param][row].get() == "":
+                logger.debug('Empty input box during toggle strategy. Row: %d', row)
+                self.root.logging_frame.add_log(f'Missing "{param}" parameter.')
+                return
+
+        strategy_selected = self.body_widgets['strategy_type_var'][row].get()
+        for param in self._extra_params[strategy_selected]:
+            code_name = param['code_name']
+            if self._additional_parameters[row][code_name] is None:
+                logger.debug('Empty input box during toggle strategy. Row: %d', row)
+                self.root.logging_frame.add_log(f'Missing "{code_name}" parameter.')
+                return
+
+        symbol, exchange = self.body_widgets['contract_var'][row].get().split('_')
+        timeframe = self.body_widgets['time_frame_var'][row]
+        balance_pct = float(self.body_widgets['balance_pct'][row].get())
+        take_profit = float(self.body_widgets['take_profit'][row].get())
+        stop_loss = float(self.body_widgets['stop_loss'][row].get())
+
+        if self.body_widgets['activation'][row].cget('text') == 'off':
+            # Deactivate params so they can't be changed.
+            for param in self._base_params:
+                code_name = param['code_name']
+                if code_name != 'activation' and '_var' not in code_name:
+                    self.body_widgets[code_name][row].config(state=tk.DISABLED)
+            self.body_widgets['activation'][row].config(bg='darkgreen', text='on')
+            self.root.logging_frame.add_log(f'Activated {strategy_selected} strategy on {symbol}.')
+        else:
+            # Deactivate params so they can't be changed.
+            for param in self._base_params:
+                code_name = param['code_name']
+                if code_name != 'activation' and '_var' not in code_name:
+                    self.body_widgets[code_name][row].config(state=tk.NORMAL)
+            self.body_widgets['activation'][row].config(bg='darkred', text='off')
+            self.root.logging_frame.add_log(f'Deactivated {strategy_selected} strategy on {symbol}.')
 
     def _delete_row(self, b_index: int):
         logger.debug('Delete row: %s', b_index)
         # Run through the columns, forgetting cells and removing entries... and I'm all out of entries.
+        # The delete button is deactivated while the strategy is on. No need to check.
         for element in self._base_params:
             self.body_widgets[element['code_name']][b_index].grid_forget()
             del self.body_widgets[element['code_name']][b_index]

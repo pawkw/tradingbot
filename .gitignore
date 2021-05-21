@@ -1,5 +1,6 @@
 binance_keys.py
 coinbase_keys.py
+/binance_keys.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

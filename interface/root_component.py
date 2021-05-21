@@ -1,6 +1,7 @@
 import tkinter as tk
 import logging
 from connectors.binance_futures import BinanceFuturesClient
+from connectors.coinbase import CoinBaseFuturesClient
 
 from interface.styling import *
 from interface.logging_component import Logging
@@ -10,10 +11,10 @@ from interface.strategy_componenet import StrategyEditor
 logger = logging.getLogger()
 
 class Root(tk.Tk):
-    def __init__(self, binance_client: BinanceFuturesClient):
+    def __init__(self, binance_client: BinanceFuturesClient, coinbase_client: CoinBaseFuturesClient):
         super().__init__()
         self.binance_client = binance_client
-        self.coinbase_client = dict() # Place holder
+        self.coinbase_client = coinbase_client
         self.title("Trading Bot")
         self.configure(bg=BG_COLOUR)
 
@@ -26,10 +27,11 @@ class Root(tk.Tk):
         self._watchlist_frame = Watchlist(self.binance_client.get_contracts(), dict(), self._left_frame, bg=BG_COLOUR)
         self._watchlist_frame.pack(side=tk.TOP)
 
-        self._logging_frame = Logging(self._left_frame, bg=BG_COLOUR)
-        self._logging_frame.pack(side=tk.TOP)
+        self.logging_frame = Logging(self._left_frame, bg=BG_COLOUR)
+        self.logging_frame.pack(side=tk.TOP)
 
-        self._strategy_frame = StrategyEditor(self._right_frame, bg=BG_COLOUR)
+        self._strategy_frame = StrategyEditor(self, self.binance_client, self.coinbase_client, self._right_frame,
+                                              bg=BG_COLOUR)
         self._strategy_frame.pack(side=tk.TOP)
 
         self._trades_frame = TradesWatch(self._right_frame, bg=BG_COLOUR)
@@ -42,7 +44,7 @@ class Root(tk.Tk):
         for log in self.binance_client.logs:
             if not log['displayed']:
                 # logger.debug('UI update')
-                self._logging_frame.add_log(log['log'])
+                self.logging_frame.add_log(log['log'])
                 log['displayed'] = True
 
         # Update watchlist
