@@ -13,6 +13,7 @@ import typing
 
 import binance_keys
 from models import *
+from strategies import TechnicalStrategy, BreakoutStrategy
 
 logger = logging.getLogger()
 
@@ -32,6 +33,7 @@ class BinanceFuturesClient:
         self._headers = {'X-MBX-APIKEY': self._public_key}
 
         self.prices = dict()
+        self.strategies: typing.Dict[int, typing.Union[TechnicalStrategy, BreakoutStrategy]] = dict()
         self.logs = []
 
         self.contracts = self.get_contracts()
@@ -200,6 +202,7 @@ class BinanceFuturesClient:
     def _on_open(self, ws):
         # logger.info("Opened websocket: %s", self._base_wss)
         self.subscribe_to_channel(list(self.contracts.values()), 'bookTicker')
+        self.subscribe_to_channel(list(self.contracts.values()), 'aggTrade')
         return
 
     def _on_error(self, ws, msg: str):
@@ -222,6 +225,12 @@ class BinanceFuturesClient:
                 else:
                     self.prices[symbol]['bid'] = float(data['b'])
                     self.prices[symbol]['ask'] = float(data['a'])
+            elif data['e'] == 'aggTrade':
+
+                symbol = data['s']
+                for key, strat in self.strategies.items():
+                    if strat.contract.symbol == symbol:
+                        strat.parse_trades(float(data['p']), float(data['q']), data['T'])
         return
 
     def subscribe_to_channel(self, contracts: typing.List[Contract], channel: str):

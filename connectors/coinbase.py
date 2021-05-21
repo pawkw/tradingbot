@@ -14,7 +14,7 @@ import threading
 import typing
 import logging
 from requests.auth import AuthBase
-
+from strategies import TechnicalStrategy, BreakoutStrategy
 logger = logging.getLogger()
 
 
@@ -31,7 +31,7 @@ class CoinbaseExchangeAuth(AuthBase):
         signature = hmac.new(hmac_key, message, hashlib.sha256)
         # signature_b64 = signature.digest().encode('base64').rstrip('\n')
         signature_b64 = signature.hexdigest().rstrip('\n')
-
+        self.strategies: typing.Dict[int, typing.Union[TechnicalStrategy, BreakoutStrategy]] = dict()
         request.headers.update({
             'CB-ACCESS-SIGN': signature_b64,
             'CB-ACCESS-TIMESTAMP': timestamp,

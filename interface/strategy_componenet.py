@@ -8,6 +8,7 @@ logger = logging.getLogger()
 
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.coinbase import CoinBaseFuturesClient
+from strategies import TechnicalStrategy, BreakoutStrategy
 
 class StrategyEditor(tk.Frame):
     def __init__(self, root, binance: BinanceFuturesClient, coinbase: CoinBaseFuturesClient, *args, **kwargs):
@@ -198,8 +199,25 @@ class StrategyEditor(tk.Frame):
         balance_pct = float(self.body_widgets['balance_pct'][row].get())
         take_profit = float(self.body_widgets['take_profit'][row].get())
         stop_loss = float(self.body_widgets['stop_loss'][row].get())
+        contract = self._exchanges[exchange].contracts[symbol]
 
         if self.body_widgets['activation'][row].cget('text') == 'off':
+            if strategy_selected == "Technical":
+                new_strategy = TechnicalStrategy(contract, exchange, timeframe, balance_pct, take_profit, stop_loss,
+                                                 self._additional_parameters[row])
+            elif strategy_selected == "Breakout":
+                new_strategy = BreakoutStrategy(contract, exchange, timeframe, balance_pct, take_profit, stop_loss,
+                                                 self._additional_parameters[row])
+            else:
+                return
+
+            new_strategy.candles = self._exchanges[exchange].get_historical_data(contract, timeframe)
+
+            if len(new_strategy.candles) == 0:
+                self.root.logging_frame.add_log(f"Error retrieving {contract.symbol} candles.")
+                return
+
+            self._exchanges[exchange].strategies[row] = new_strategy
             # Deactivate params so they can't be changed.
             for param in self._base_params:
                 code_name = param['code_name']
@@ -208,7 +226,8 @@ class StrategyEditor(tk.Frame):
             self.body_widgets['activation'][row].config(bg='darkgreen', text='on')
             self.root.logging_frame.add_log(f'Activated {strategy_selected} strategy on {symbol}.')
         else:
-            # Deactivate params so they can't be changed.
+            del self._exchanges[exchange].strategies[row]
+            # Activate params.
             for param in self._base_params:
                 code_name = param['code_name']
                 if code_name != 'activation' and '_var' not in code_name:
