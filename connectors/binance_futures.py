@@ -197,6 +197,7 @@ class BinanceFuturesClient:
                 self.ws_thread.run_forever()
             except Exception as e:
                 logger.error('Lost connection to Websocket: %s', e)
+                self.ws_thread.close()
             time.sleep(2.0)
 
     def _on_open(self, ws):

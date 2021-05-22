@@ -65,6 +65,7 @@ class StrategyEditor(tk.Frame):
                 {'code_name': 'ema_fast', 'name': 'MACD fast period', 'widget': tk.Entry, 'data_type': int},
                 {'code_name': 'ema_slow', 'name': 'MACD slow period', 'widget': tk.Entry, 'data_type': int},
                 {'code_name': 'ema_signal', 'name': 'MACD signal period', 'widget': tk.Entry, 'data_type': int},
+                {'code_name': 'rsi_length', 'name': 'RSI period', 'widget': tk.Entry, 'data_type': int},
             ],
             "Breakout": [
                 {'code_name': 'min_volume', 'name': 'Minimum volume', 'widget': tk.Entry, 'data_type': float},
@@ -216,6 +217,8 @@ class StrategyEditor(tk.Frame):
             if len(new_strategy.candles) == 0:
                 self.root.logging_frame.add_log(f"Error retrieving {contract.symbol} candles.")
                 return
+
+            new_strategy._check_signal()
 
             self._exchanges[exchange].strategies[row] = new_strategy
             # Deactivate params so they can't be changed.

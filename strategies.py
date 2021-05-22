@@ -1,11 +1,14 @@
 import logging
 from typing import *
+import pandas as pd
 
 from models import *
 logger = logging.getLogger()
 
+
 # Convert '1m' into 60000, '2h' into 7200000.
 def timeframe_equiv(tf: str) -> int:
+    print(f"tf: {tf}")
     bases ={
         's': 1000,
         'm': 60*1000,
@@ -13,9 +16,12 @@ def timeframe_equiv(tf: str) -> int:
         'd': 24*60*60*1000,
         'w': 7*24*60*60*1000
     }
-    base = bases[tf[-1]]
+    per = tf[-2:]
+    base = bases[per]
+    print(f"per: {per}")
     mult = int(tf[:-1])
     return base * mult
+
 
 class Strategy:
     def __init__(self, contract: Contract, exchange: str, timeframe: str, balance_pct: float, take_profit: float,
@@ -23,6 +29,7 @@ class Strategy:
         self.contract = contract
         self.exchange = exchange
         self.timeframe = timeframe
+        print(f"timeframe = {timeframe}")
         self.timeframe_ms = timeframe_equiv(timeframe)
         self.balance_pct = balance_pct
         self.take_profit = take_profit
@@ -77,6 +84,7 @@ class Strategy:
             logger.info(f"New candle for {self.contract.symbol} on {self.exchange}.")
             return 'New candle.'
 
+
 class TechnicalStrategy(Strategy):
     def __init__(self, contract: Contract, exchange: str, timeframe: str, balance_pct: float, take_profit: float,
                  stop_loss: float, other_params: Dict):
@@ -84,7 +92,56 @@ class TechnicalStrategy(Strategy):
         self._ema_fast = other_params['ema_fast']
         self._ema_slow = other_params['ema_slow']
         self._ema_signal = other_params['ema_signal']
+        self._rsi_length = other_params['rsi_length']
         logger.debug(f"Started Technical strategy on {contract}.")
+
+    def _rsi(self):
+        close_list = []
+        for candle in self.candles:
+            close_list.append(candle.close)
+
+        closes = pd.Series(close_list)
+        delta = closes.diff().dropna()
+
+        up, down = delta.copy(), delta.copy()
+        up[up < 0] = 0
+        down[down > 0] = 0
+
+        avg_gain = up.ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean()
+        avg_loss = down.abs().ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean()
+        rs = avg_gain / avg_loss
+
+        rsi = 100 - (100/(1+rs))
+        rsi = rsi.round(2)
+
+        return rsi.iloc[-2]
+
+    def _macd(self) -> Tuple[float, float]:
+
+        close_list = []
+        for candle in self.candles:
+            close_list.append(candle.close)
+
+        closes = pd.Series(close_list)
+
+        ema_fast = closes.ewm(span=self._ema_fast).mean()
+        ema_slow = closes.ewm(span=self._ema_slow).mean()
+        macd_line = ema_fast - ema_slow
+        macd_signal = macd_line.ewm(span=self._ema_signal).mean()
+
+        return macd_line.iloc[-2], macd_signal.iloc[-2]
+
+    def check_signal(self):
+        macd_line, macd_signal = self._macd()
+        rsi = self._rsi()
+
+        logger.debug(f"rsi: {rsi} macd_line: {macd_line} macd_signal: {macd_signal}")
+        if rsi < 30 and macd_line > macd_signal:
+            return 1
+        elif rsi > 70 and macd_line < macd_signal:
+            return -1
+        else:
+            return 0
 
 
 class BreakoutStrategy(Strategy):
@@ -93,3 +150,11 @@ class BreakoutStrategy(Strategy):
         super().__init__(contract, exchange, timeframe, balance_pct, take_profit, stop_loss)
         self._min_volume = other_params['min_volume']
         logger.debug(f"Started Breakout strategy on {contract}.")
+
+    def check_signal(self) -> int:
+        if self.candles[-1].volume > self._min_volume:
+            if self.candles[-1].close > self.candles[-2].high:
+                return 1
+            if self.candles[-1].close < self.candles[-2].low:
+                return -1
+        return 0
