@@ -203,7 +203,7 @@ class BinanceFuturesClient:
     def _on_open(self, ws):
         # logger.info("Opened websocket: %s", self._base_wss)
         self.subscribe_to_channel(list(self.contracts.values()), 'bookTicker')
-        self.subscribe_to_channel(list(self.contracts.values()), 'aggTrade')
+        # self.subscribe_to_channel(list(self.contracts.values()), 'aggTrade')
         return
 
     def _on_error(self, ws, msg: str):

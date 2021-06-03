@@ -5,6 +5,7 @@ import pandas as pd
 from models import *
 logger = logging.getLogger()
 
+TF_EQUIV = {"1m": 60, "5m": 300, "15m": 900, "30m": 900, "1h": 3600, "4h": 14400}
 
 # Convert '1m' into 60000, '2h' into 7200000.
 def timeframe_equiv(tf: str) -> int:
@@ -16,7 +17,8 @@ def timeframe_equiv(tf: str) -> int:
         'd': 24*60*60*1000,
         'w': 7*24*60*60*1000
     }
-    per = tf[-2:]
+    logger.debug("Timeframe equiv: %s", tf)
+    per = tf[-1:]
     base = bases[per]
     print(f"per: {per}")
     mult = int(tf[:-1])

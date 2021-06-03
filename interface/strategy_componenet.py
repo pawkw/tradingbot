@@ -106,9 +106,9 @@ class StrategyEditor(tk.Frame):
                 self.body_widgets[code_name][b_index] = tk.Entry(self._table_frame, justify=tk.CENTER)
             elif base_param['widget'] == tk.Button:
                 self.body_widgets[code_name][b_index] = tk.Button(self._table_frame, text=base_param['text'],
-                                                        bg=base_param['bg'], fg=FG_COLOUR1,
-                                                        command=lambda frozen_command=base_param['command']:
-                                                        frozen_command(b_index))
+                                                                  bg=base_param['bg'], fg=FG_COLOUR1,
+                                                                  command=lambda frozen_command=base_param['command']:
+                                                                  frozen_command(b_index))
             else:
                 continue
             self.body_widgets[code_name][b_index].grid(row=b_index, column=col)
@@ -196,7 +196,7 @@ class StrategyEditor(tk.Frame):
                 return
 
         symbol, exchange = self.body_widgets['contract_var'][row].get().split('_')
-        timeframe = self.body_widgets['time_frame_var'][row]
+        timeframe = self.body_widgets['time_frame_var'][row].get()
         balance_pct = float(self.body_widgets['balance_pct'][row].get())
         take_profit = float(self.body_widgets['take_profit'][row].get())
         stop_loss = float(self.body_widgets['stop_loss'][row].get())
@@ -218,9 +218,8 @@ class StrategyEditor(tk.Frame):
                 self.root.logging_frame.add_log(f"Error retrieving {contract.symbol} candles.")
                 return
 
-            new_strategy._check_signal()
-
             self._exchanges[exchange].strategies[row] = new_strategy
+
             # Deactivate params so they can't be changed.
             for param in self._base_params:
                 code_name = param['code_name']
