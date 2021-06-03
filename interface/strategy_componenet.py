@@ -204,11 +204,11 @@ class StrategyEditor(tk.Frame):
 
         if self.body_widgets['activation'][row].cget('text') == 'off':
             if strategy_selected == "Technical":
-                new_strategy = TechnicalStrategy(contract, exchange, timeframe, balance_pct, take_profit, stop_loss,
-                                                 self._additional_parameters[row])
+                new_strategy = TechnicalStrategy(self._exchanges['exchange'], contract, exchange, timeframe,
+                                                 balance_pct, take_profit, stop_loss, self._additional_parameters[row])
             elif strategy_selected == "Breakout":
-                new_strategy = BreakoutStrategy(contract, exchange, timeframe, balance_pct, take_profit, stop_loss,
-                                                 self._additional_parameters[row])
+                new_strategy = BreakoutStrategy(self._exchanges['exchange'], contract, exchange, timeframe,
+                                                balance_pct, take_profit, stop_loss, self._additional_parameters[row])
             else:
                 return
 
@@ -219,7 +219,6 @@ class StrategyEditor(tk.Frame):
                 return
 
             self._exchanges[exchange].strategies[row] = new_strategy
-
             # Deactivate params so they can't be changed.
             for param in self._base_params:
                 code_name = param['code_name']

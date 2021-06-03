@@ -231,7 +231,8 @@ class BinanceFuturesClient:
                 symbol = data['s']
                 for key, strat in self.strategies.items():
                     if strat.contract.symbol == symbol:
-                        strat.parse_trades(float(data['p']), float(data['q']), data['T'])
+                        res = strat.parse_trades(float(data['p']), float(data['q']), data['T'])
+                        strat.check_trade(res)
         return
 
     def subscribe_to_channel(self, contracts: typing.List[Contract], channel: str):
@@ -249,3 +250,23 @@ class BinanceFuturesClient:
         except Exception as e:
             logger.error('Error while subscribing to %d feeds of %s: %s', channel, len(contracts), e)
         return
+
+    def get_trade_size(self, contract: Contract, price: float, balance_pct: float):
+
+        balance = self.get_balances()
+        if balance is not None:
+            if 'USDT' in balance:
+                balance = balance['USDT'].wallet_balance
+            else:
+                return None
+        else:
+            return None
+
+        trade_size = (balance * balance_pct / 100) / price
+
+        # Take care of floating point errors.
+        trade_size = round(round(trade_size / contract.lot_size) * contract.lot_size, 8)
+
+        logger.info("Binance futures contract USDT = %s, lot size = %s", balance, trade_size)
+
+        return trade_size
